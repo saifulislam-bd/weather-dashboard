@@ -1,14 +1,16 @@
-export function getFormattedDate(value, type, inMs) {
+function getFormattedDate(value, type, inMS) {
   if (!type) return value;
-  if (!inMs) value = value * 1000;
+
+  if (!inMS) {
+    value = value * 1000;
+  }
 
   const date = new Date(value);
-
   let options;
 
-  if (type === "day") {
+  if (type === "date") {
     options = {
-      weekday: "numeric",
+      weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -20,5 +22,7 @@ export function getFormattedDate(value, type, inMs) {
     };
   }
 
-  return new Intl.DateTimeFormat("en-US", options).format(date);
+  return new Intl.DateTimeFormat("en-us", options).format(date);
 }
+
+export { getFormattedDate };
