@@ -1,25 +1,31 @@
-import { useEffect, useState, useCallback } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useContext, useEffect, useState } from "react";
+import { LocationContext } from "../context";
 
-const initialData = {
-  location: "",
-  climate: "",
-  temperature: "",
-  maxTemperature: "",
-  minTemperature: "",
-  humidity: "",
-  cloudPercentage: "",
-  wind: "",
-  time: "",
-  longitude: "",
-  latitude: "",
-};
+const useWeather = () => {
+  const [weatherData, setWeatherData] = useState({
+    location: "",
+    climate: "",
+    temperature: "",
+    maxTemperature: "",
+    minTemperature: "",
+    humidity: "",
+    cloudPercentage: "",
+    wind: "",
+    time: "",
+    longitude: "",
+    latitude: "",
+  });
+  const [loading, setLoading] = useState({
+    state: false,
+    message: "",
+  });
 
-export function useWeather() {
-  const [weatherData, setWeatherData] = useState(initialData);
-  const [loading, setLoading] = useState({ state: false, message: "" });
   const [error, setError] = useState(null);
 
-  const fetchWeatherData = useCallback(async (latitude, longitude) => {
+  const { selectedLocation } = useContext(LocationContext);
+
+  const fetchWeatherData = async (latitude, longitude) => {
     try {
       setLoading({
         ...loading,
@@ -37,9 +43,10 @@ export function useWeather() {
         const errorMessage = `Fetching weather data failed: ${response.status}`;
         throw new Error(errorMessage);
       }
+
       const data = await response.json();
 
-      const updatedWeatherData = {
+      const updateWeatherData = {
         ...weatherData,
         location: data?.name,
         climate: data?.weather[0]?.main,
@@ -50,25 +57,42 @@ export function useWeather() {
         cloudPercentage: data?.clouds?.all,
         wind: data?.wind?.speed,
         time: data?.dt,
-        latitude: latitude,
         longitude: longitude,
+        latitude: latitude,
       };
-      setWeatherData(updatedWeatherData);
+      setWeatherData(updateWeatherData);
     } catch (err) {
       setError(err);
     } finally {
-      setLoading({ state: false, message: "" });
+      setLoading({
+        ...loading,
+        state: false,
+        message: "",
+      });
     }
-
-    return { weatherData, loading, error };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  };
 
   useEffect(() => {
-    setLoading({ state: true, message: "Finding location..." });
-    navigator.geolocation.getCurrentPosition((position) => {
-      fetchWeatherData(position.coords.latitude, position.coords.longitude);
+    setLoading({
+      ...loading,
+      state: true,
+      message: "Finding location...",
     });
-  }, [fetchWeatherData]);
-  return { weatherData, loading, error };
-}
+
+    if (selectedLocation.latitude && selectedLocation.longitude) {
+      fetchWeatherData(selectedLocation.latitude, selectedLocation.longitude);
+    } else {
+      navigator.geolocation.getCurrentPosition(function (position) {
+        fetchWeatherData(position.coords.latitude, position.coords.longitude);
+      });
+    }
+  }, [selectedLocation.latitude, selectedLocation.longitude]);
+
+  return {
+    weatherData,
+    error,
+    loading,
+  };
+};
+
+export default useWeather;

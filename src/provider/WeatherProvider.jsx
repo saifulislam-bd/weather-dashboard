@@ -1,5 +1,5 @@
 import { WeatherContext } from "../context";
-import { useWeather } from "../hooks/useWeather";
+import useWeather from "../hooks/useWeather";
 
 const WeatherProvider = ({ children }) => {
   const { weatherData, error, loading } = useWeather();
